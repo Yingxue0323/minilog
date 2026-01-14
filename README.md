@@ -1,8 +1,16 @@
-# 📊 MiniLog - Ultra-Lightweight Log + Monitoring System
+<h1 align="center">📊 MiniLog - Ultra-Lightweight Log + Monitoring System</h1>
 
-> **Languages:** [English](README.md) | [中文](README.zh-CN.md)
+<p align="center">
+  <strong>Languages:</strong>
+  <a href="README.md">English</a> |
+  <a href="README.zh-CN.md">中文</a>
+</p>
 
-**All-in-one solution**: Log collection + Server monitoring, single binary, 30MB memory, 5-minute setup
+**All-in-one solution:** Log collection + Server monitoring, single binary, 30MB memory, 5-minute setup
+<p align="center">
+  <img width="1000" height="770" alt="Screen Shot 2026-01-14 at 16 30 48" src="https://github.com/user-attachments/assets/c879f11f-db9f-435c-ba44-a77fe553a588" />
+  <img src="https://github.com/user-attachments/assets/d99e070b-cd33-4b03-8387-19ba0607b762" width="779" />
+</p>
 
 ## ✨ Why MiniLog?
 
