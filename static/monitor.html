@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MiniLog - 服务器监控</title>
+    <meta charset="utf-8">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace; 
+            padding: 20px; 
+            background: #1e1e1e; 
+            color: #d4d4d4; 
+        }
+        h1 { 
+            color: #4ec9b0; 
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .badge { 
+            background: #238636; 
+            padding: 4px 10px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: normal;
+        }
+        
+        /* 导航栏 */
+        .nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav a {
+            padding: 10px 20px;
+            background: #2d2d2d;
+            color: #d4d4d4;
+            text-decoration: none;
+            border-radius: 4px;
+            border: 1px solid #3e3e3e;
+            transition: all 0.2s;
+        }
+        .nav a:hover {
+            background: #3e3e3e;
+        }
+        .nav a.active {
+            background: #0e639c;
+            border-color: #0e639c;
+        }
+        
+        /* 统计信息栏 */
+        .info-bar { 
+            background: #2d2d2d; 
+            padding: 12px 15px; 
+            margin-bottom: 15px; 
+            border-radius: 6px; 
+            display: flex; 
+            gap: 25px; 
+            flex-wrap: wrap;
+            border: 1px solid #3e3e3e;
+        }
+        .stat { font-size: 13px; }
+        .stat-label { color: #999; }
+        .stat-value { 
+            color: #4fc1ff; 
+            font-weight: bold; 
+            margin-left: 5px;
+        }
+        
+        /* 服务器卡片 */
+        .servers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .server-card {
+            background: #2d2d2d;
+            border: 1px solid #3e3e3e;
+            border-radius: 6px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .server-card:hover {
+            border-color: #0e639c;
+            transform: translateY(-2px);
+        }
+        
+        .server-card.selected {
+            border-color: #0e639c;
+            background: #1a3a4a;
+        }
+        
+        .server-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .server-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #4ec9b0;
+        }
+        
+        .server-status {
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        
+        .status-online {
+            background: #238636;
+            color: white;
+        }
+        
+        .status-timeout {
+            background: #d97706;
+            color: white;
+        }
+        
+        .status-offline {
+            background: #c63737;
+            color: white;
+        }
+        
+        .server-metrics {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+        }
+        
+        .metric-label {
+            color: #999;
+        }
+        
+        .metric-value {
+            color: #4fc1ff;
+            font-weight: 600;
+        }
+        
+        .metric-bar {
+            height: 4px;
+            background: #1e1e1e;
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        
+        .metric-bar-fill {
+            height: 100%;
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+        
+        .bar-cpu { background: #4fc1ff; }
+        .bar-memory { background: #ce9178; }
+        .bar-disk { background: #73c991; }
+        
+        /* 图表区域 */
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-card {
+            background: #2d2d2d;
+            border: 1px solid #3e3e3e;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        
+        .chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #4ec9b0;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 250px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            color: #666;
+            padding: 60px 20px;
+            font-size: 14px;
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        button {
+            padding: 10px 18px;
+            background: #0e639c;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        
+        button:hover { background: #1177bb; }
+        button:active { background: #0d5689; }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>
+        📊 MiniLog 监控 
+        <span class="badge">实时监控 + 图表分析</span>
+    </h1>
+    
+    <!-- 导航栏 -->
+    <div class="nav">
+        <a href="/">📋 日志查询</a>
+        <a href="/monitor.html" class="active">📊 服务器监控</a>
+    </div>
+    
+    <!-- 统计信息 -->
+    <div class="info-bar" id="stats">
+        <div class="stat">
+            <span class="stat-label">总服务器:</span>
+            <span class="stat-value" id="totalServers">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">在线:</span>
+            <span class="stat-value" id="onlineServers">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">离线:</span>
+            <span class="stat-value" id="offlineServers">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">总指标数:</span>
+            <span class="stat-value" id="totalMetrics">0</span>
+        </div>
+    </div>
+    
+    <!-- 控制按钮 -->
+    <div class="controls">
+        <button onclick="refreshData()">🔄 刷新数据</button>
+        <button onclick="toggleAutoRefresh()" id="autoRefreshBtn">⏸ 暂停自动刷新</button>
+    </div>
+    
+    <!-- 服务器卡片 -->
+    <div class="servers-grid" id="serversGrid"></div>
+    
+    <!-- 图表区域 -->
+    <div class="charts-container" id="chartsContainer"></div>
+    
+    <script>
+        // 全局变量
+        let selectedServer = null;
+        let autoRefreshEnabled = true;
+        let autoRefreshTimer = null;
+        let charts = {};
+        
+        // ============ 数据获取 ============
+        async function fetchServerStatus() {
+            try {
+                const response = await fetch('/api/servers');
+                return await response.json();
+            } catch (error) {
+                console.error('获取服务器状态失败:', error);
+                return [];
+            }
+        }
+        
+        async function fetchMetrics(server) {
+            try {
+                const response = await fetch(`/api/metrics?server=${server}&limit=120`);
+                return await response.json();
+            } catch (error) {
+                console.error('获取监控数据失败:', error);
+                return [];
+            }
+        }
+        
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/stats');
+                return await response.json();
+            } catch (error) {
+                console.error('获取统计信息失败:', error);
+                return {};
+            }
+        }
+        
+        // ============ 渲染服务器卡片 ============
+        function renderServerCards(servers) {
+            const grid = document.getElementById('serversGrid');
+            
+            if (servers.length === 0) {
+                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🖥️</div>暂无服务器数据<br><small>请运行 client_agent.py 开始采集</small></div>';
+                return;
+            }
+            
+            grid.innerHTML = servers.map(server => {
+                const statusClass = `status-${server.status}`;
+                const statusText = {
+                    'online': '在线',
+                    'timeout': '超时',
+                    'offline': '离线'
+                }[server.status] || '未知';
+                
+                const latest = server.latest || {};
+                const cpuPercent = latest.cpu_percent || 0;
+                const memoryPercent = latest.memory_percent || 0;
+                const diskPercent = latest.disk_percent || 0;
+                const loadAvg = latest.load_avg || 0;
+                
+                const isSelected = selectedServer === server.server ? 'selected' : '';
+                
+                return `
+                    <div class="server-card ${isSelected}" onclick="selectServer('${server.server}')">
+                        <div class="server-header">
+                            <div class="server-name">${server.server}</div>
+                            <div class="server-status ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="server-metrics">
+                            <div class="metric-row">
+                                <span class="metric-label">CPU</span>
+                                <span class="metric-value">${cpuPercent.toFixed(1)}%</span>
+                            </div>
+                            <div class="metric-bar">
+                                <div class="metric-bar-fill bar-cpu" style="width: ${cpuPercent}%"></div>
+                            </div>
+                            
+                            <div class="metric-row">
+                                <span class="metric-label">内存</span>
+                                <span class="metric-value">${memoryPercent.toFixed(1)}%</span>
+                            </div>
+                            <div class="metric-bar">
+                                <div class="metric-bar-fill bar-memory" style="width: ${memoryPercent}%"></div>
+                            </div>
+                            
+                            <div class="metric-row">
+                                <span class="metric-label">磁盘</span>
+                                <span class="metric-value">${diskPercent}%</span>
+                            </div>
+                            <div class="metric-bar">
+                                <div class="metric-bar-fill bar-disk" style="width: ${diskPercent}%"></div>
+                            </div>
+                            
+                            <div class="metric-row" style="margin-top: 8px;">
+                                <span class="metric-label">负载</span>
+                                <span class="metric-value">${loadAvg.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // ============ 选择服务器 ============
+        async function selectServer(server) {
+            selectedServer = server;
+            
+            // 更新卡片选中状态
+            const servers = await fetchServerStatus();
+            renderServerCards(servers);
+            
+            // 加载图表
+            await renderCharts(server);
+        }
+        
+        // ============ 渲染图表 ============
+        async function renderCharts(server) {
+            const container = document.getElementById('chartsContainer');
+            
+            if (!server) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📈</div>请选择一个服务器查看详细图表</div>';
+                return;
+            }
+            
+            // 获取数据
+            const metrics = await fetchMetrics(server);
+            
+            if (metrics.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div>暂无监控数据</div>';
+                return;
+            }
+            
+            // 准备数据
+            const labels = metrics.map(m => {
+                const time = m.timestamp.split(' ')[1];
+                return time.substring(0, 5); // HH:MM
+            });
+            
+            const cpuData = metrics.map(m => m.metrics.cpu_percent);
+            const memoryData = metrics.map(m => m.metrics.memory_percent);
+            const diskData = metrics.map(m => m.metrics.disk_percent);
+            const loadData = metrics.map(m => m.metrics.load_avg);
+            
+            // 创建图表容器
+            container.innerHTML = `
+                <div class="chart-card">
+                    <div class="chart-title">CPU 使用率 (${server})</div>
+                    <div class="chart-wrapper">
+                        <canvas id="cpuChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">内存使用率 (${server})</div>
+                    <div class="chart-wrapper">
+                        <canvas id="memoryChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">磁盘使用 (${server})</div>
+                    <div class="chart-wrapper">
+                        <canvas id="diskChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">系统负载 (${server})</div>
+                    <div class="chart-wrapper">
+                        <canvas id="loadChart"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            // 销毁旧图表
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+            
+            // CPU 图表
+            const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+            charts.cpu = new Chart(cpuCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'CPU %',
+                        data: cpuData,
+                        borderColor: '#4fc1ff',
+                        backgroundColor: 'rgba(79, 193, 255, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: getChartOptions('CPU 使用率 (%)', 0, 100)
+            });
+            
+            // 内存图表
+            const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+            charts.memory = new Chart(memoryCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '内存 %',
+                        data: memoryData,
+                        borderColor: '#ce9178',
+                        backgroundColor: 'rgba(206, 145, 120, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: getChartOptions('内存使用率 (%)', 0, 100)
+            });
+            
+            // 磁盘图表
+            const diskCtx = document.getElementById('diskChart').getContext('2d');
+            charts.disk = new Chart(diskCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '磁盘 %',
+                        data: diskData,
+                        borderColor: '#73c991',
+                        backgroundColor: 'rgba(115, 201, 145, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: getChartOptions('磁盘使用率 (%)', 0, 100)
+            });
+            
+            // 负载图表
+            const loadCtx = document.getElementById('loadChart').getContext('2d');
+            charts.load = new Chart(loadCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '负载',
+                        data: loadData,
+                        borderColor: '#dbb765',
+                        backgroundColor: 'rgba(219, 183, 101, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: getChartOptions('系统负载 (1分钟)')
+            });
+        }
+        
+        // 图表配置
+        function getChartOptions(title, min, max) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            color: '#d4d4d4'
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: '#3e3e3e'
+                        },
+                        ticks: {
+                            color: '#999',
+                            maxTicksLimit: 10
+                        }
+                    },
+                    y: {
+                        min: min,
+                        max: max,
+                        grid: {
+                            color: '#3e3e3e'
+                        },
+                        ticks: {
+                            color: '#999'
+                        }
+                    }
+                }
+            };
+        }
+        
+        // ============ 更新统计信息 ============
+        async function updateStats() {
+            const stats = await fetchStats();
+            const servers = await fetchServerStatus();
+            
+            const onlineCount = servers.filter(s => s.status === 'online').length;
+            const offlineCount = servers.filter(s => s.status === 'offline').length;
+            
+            document.getElementById('totalServers').textContent = servers.length;
+            document.getElementById('onlineServers').textContent = onlineCount;
+            document.getElementById('offlineServers').textContent = offlineCount;
+            document.getElementById('totalMetrics').textContent = stats.total_metrics_received || 0;
+        }
+        
+        // ============ 刷新数据 ============
+        async function refreshData() {
+            await updateStats();
+            const servers = await fetchServerStatus();
+            renderServerCards(servers);
+            
+            if (selectedServer) {
+                await renderCharts(selectedServer);
+            }
+        }
+        
+        // ============ 自动刷新控制 ============
+        function toggleAutoRefresh() {
+            autoRefreshEnabled = !autoRefreshEnabled;
+            const btn = document.getElementById('autoRefreshBtn');
+            
+            if (autoRefreshEnabled) {
+                btn.textContent = '⏸ 暂停自动刷新';
+                startAutoRefresh();
+            } else {
+                btn.textContent = '▶ 开启自动刷新';
+                stopAutoRefresh();
+            }
+        }
+        
+        function startAutoRefresh() {
+            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+            autoRefreshTimer = setInterval(refreshData, 5000); // 每 5 秒刷新
+        }
+        
+        function stopAutoRefresh() {
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+                autoRefreshTimer = null;
+            }
+        }
+        
+        // ============ 初始化 ============
+        document.addEventListener('DOMContentLoaded', async () => {
+            await refreshData();
+            startAutoRefresh();
+        });
+    </script>
+</body>
+</html>

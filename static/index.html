@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MiniLog - 生产级</title>
+    <meta charset="utf-8">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace; 
+            padding: 20px; 
+            background: #1e1e1e; 
+            color: #d4d4d4; 
+        }
+        h1 { 
+            color: #4ec9b0; 
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .badge { 
+            background: #238636; 
+            padding: 4px 10px; 
+            border-radius: 4px; 
+            font-size: 12px; 
+            font-weight: normal;
+        }
+        
+        /* 统计信息栏 */
+        .info-bar { 
+            background: #2d2d2d; 
+            padding: 12px 15px; 
+            margin-bottom: 15px; 
+            border-radius: 6px; 
+            display: flex; 
+            gap: 25px; 
+            flex-wrap: wrap;
+            border: 1px solid #3e3e3e;
+        }
+        .stat { font-size: 13px; }
+        .stat-label { color: #999; }
+        .stat-value { 
+            color: #4fc1ff; 
+            font-weight: bold; 
+            margin-left: 5px;
+        }
+        
+        /* 搜索栏 */
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        input { 
+            padding: 10px 14px; 
+            flex: 1;
+            max-width: 400px;
+            background: #2d2d2d; 
+            border: 1px solid #555; 
+            color: #d4d4d4; 
+            border-radius: 4px;
+            font-size: 13px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #0e639c;
+        }
+        button { 
+            padding: 10px 18px; 
+            background: #0e639c; 
+            border: none; 
+            color: white; 
+            cursor: pointer; 
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        button:hover { background: #1177bb; }
+        button:active { background: #0d5689; }
+        
+        /* 矩阵 Tab 区域 */
+        .filter-matrix {
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border: 1px solid #3e3e3e;
+        }
+        .filter-section {
+            margin-bottom: 12px;
+        }
+        .filter-section:last-child {
+            margin-bottom: 0;
+        }
+        .filter-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 8px 16px;
+            background: #1e1e1e;
+            border: 1px solid #555;
+            color: #d4d4d4;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 12px;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .tab:hover {
+            background: #3e3e3e;
+            border-color: #777;
+        }
+        .tab.active {
+            background: #0e639c;
+            border-color: #0e639c;
+            color: white;
+            font-weight: 600;
+        }
+        
+        /* 特殊级别标签样式 */
+        .tab[data-level="ERROR"].active { background: #c63737; border-color: #c63737; }
+        .tab[data-level="WARN"].active { background: #d97706; border-color: #d97706; }
+        .tab[data-level="INFO"].active { background: #2563eb; border-color: #2563eb; }
+        .tab[data-level="DEBUG"].active { background: #059669; border-color: #059669; }
+        
+        /* 活动过滤器提示 */
+        .active-filters {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #999;
+            display: none;
+        }
+        .active-filters.show {
+            display: block;
+        }
+        .filter-tag {
+            display: inline-block;
+            background: #0e639c;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin-right: 6px;
+            font-size: 11px;
+        }
+        .filter-tag .remove {
+            margin-left: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        /* 日志显示区域 */
+        #logs { 
+            background: #0d1117; 
+            padding: 15px; 
+            max-height: 600px; 
+            overflow-y: auto; 
+            border: 1px solid #3e3e3e; 
+            border-radius: 6px;
+            white-space: pre-wrap; 
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        #logs::-webkit-scrollbar {
+            width: 10px;
+        }
+        #logs::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        #logs::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 5px;
+        }
+        #logs::-webkit-scrollbar-thumb:hover {
+            background: #777;
+        }
+        
+        /* 日志行样式 */
+        .log-line {
+            padding: 4px 0;
+            border-bottom: 1px solid #2d2d2d;
+        }
+        .log-line:last-child {
+            border-bottom: none;
+        }
+        .error { color: #f48771; }
+        .info { color: #4fc1ff; }
+        .warn { color: #dbb765; }
+        .debug { color: #73c991; }
+        
+        .server-tag {
+            display: inline-block;
+            background: #3e3e3e;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #999;
+            padding: 40px;
+        }
+        
+        .empty {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h1>
+        📋 MiniLog 
+        <span class="badge">实时查询 + 智能压缩 + 多服务器</span>
+    </h1>
+    
+    <!-- 导航栏 -->
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <a href="/" style="padding: 10px 20px; background: #0e639c; color: white; text-decoration: none; border-radius: 4px; border: 1px solid #0e639c;">📋 日志查询</a>
+        <a href="/monitor.html" style="padding: 10px 20px; background: #2d2d2d; color: #d4d4d4; text-decoration: none; border-radius: 4px; border: 1px solid #3e3e3e;">📊 服务器监控</a>
+    </div>
+    
+    <!-- 统计信息 -->
+    <div class="info-bar" id="stats">
+        <div class="stat">
+            <span class="stat-label">总接收:</span>
+            <span class="stat-value" id="total">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">已压缩:</span>
+            <span class="stat-value" id="compressed">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">内存中:</span>
+            <span class="stat-value" id="memory">0</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">压缩比:</span>
+            <span class="stat-value" id="ratio">-</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">服务器数:</span>
+            <span class="stat-value" id="serverCount">-</span>
+        </div>
+    </div>
+    
+    <!-- 搜索栏 -->
+    <div class="search-bar">
+        <input id="keyword" placeholder="🔍 搜索日志内容..." onkeypress="if(event.key==='Enter')applyFilters()" />
+        <button onclick="applyFilters()">查询</button>
+        <button onclick="clearAllFilters()">清除筛选</button>
+        <button onclick="toggleAutoRefresh()" id="refreshBtn">⏸ 暂停刷新</button>
+    </div>
+    
+    <!-- 矩阵过滤器 -->
+    <div class="filter-matrix">
+        <!-- 服务器筛选 -->
+        <div class="filter-section">
+            <div class="filter-label">🖥 服务器来源</div>
+            <div class="filter-tabs" id="serverTabs">
+                <div class="tab active" data-server="" onclick="selectServer('')">全部</div>
+                <!-- 动态生成 -->
+            </div>
+        </div>
+        
+        <!-- 日志级别筛选 -->
+        <div class="filter-section">
+            <div class="filter-label">📊 日志级别</div>
+            <div class="filter-tabs" id="levelTabs">
+                <div class="tab active" data-level="" onclick="selectLevel('')">全部</div>
+                <div class="tab" data-level="ERROR" onclick="selectLevel('ERROR')">ERROR</div>
+                <div class="tab" data-level="WARN" onclick="selectLevel('WARN')">WARN</div>
+                <div class="tab" data-level="INFO" onclick="selectLevel('INFO')">INFO</div>
+                <div class="tab" data-level="DEBUG" onclick="selectLevel('DEBUG')">DEBUG</div>
+            </div>
+        </div>
+        
+        <!-- 当前筛选条件 -->
+        <div class="active-filters" id="activeFilters"></div>
+    </div>
+    
+    <!-- 日志显示区域 -->
+    <div id="logs" class="loading">加载中...</div>
+    
+    <script>
+        // 全局状态
+        let autoRefreshEnabled = true;
+        let autoRefreshTimer = null;
+        let currentFilters = {
+            keyword: '',
+            server: '',
+            level: ''
+        };
+        let knownServers = new Set();
+        
+        // ============ 统计信息更新 ============
+        function updateStats() {
+            fetch('/api/stats')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('total').textContent = data.total_received || 0;
+                    document.getElementById('compressed').textContent = data.total_compressed || 0;
+                    document.getElementById('memory').textContent = data.in_memory || 0;
+                    document.getElementById('ratio').textContent = data.compression_ratio || '-';
+                    
+                    // 更新服务器列表
+                    if (data.servers) {
+                        updateServerTabs(data.servers);
+                    }
+                })
+                .catch(err => console.error('获取统计失败:', err));
+        }
+        
+        // ============ 服务器 Tab 动态生成 ============
+        function updateServerTabs(servers) {
+            if (!servers || servers.length === 0) return;
+            
+            const newServers = servers.filter(s => !knownServers.has(s));
+            if (newServers.length === 0) return;
+            
+            newServers.forEach(s => knownServers.add(s));
+            
+            const container = document.getElementById('serverTabs');
+            newServers.forEach(server => {
+                const tab = document.createElement('div');
+                tab.className = 'tab';
+                tab.setAttribute('data-server', server);
+                tab.textContent = server;
+                tab.onclick = () => selectServer(server);
+                container.appendChild(tab);
+            });
+            
+            document.getElementById('serverCount').textContent = knownServers.size;
+        }
+        
+        // ============ Tab 选择逻辑 ============
+        function selectServer(server) {
+            currentFilters.server = server;
+            
+            // 更新 Tab 样式
+            document.querySelectorAll('#serverTabs .tab').forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('data-server') === server);
+            });
+            
+            applyFilters();
+        }
+        
+        function selectLevel(level) {
+            currentFilters.level = level;
+            
+            // 更新 Tab 样式
+            document.querySelectorAll('#levelTabs .tab').forEach(tab => {
+                tab.classList.toggle('active', tab.getAttribute('data-level') === level);
+            });
+            
+            applyFilters();
+        }
+        
+        // ============ 查询日志 ============
+        function applyFilters() {
+            // 更新关键字
+            currentFilters.keyword = document.getElementById('keyword').value;
+            
+            // 如果有筛选条件，停止自动刷新
+            if (currentFilters.keyword || currentFilters.server || currentFilters.level) {
+                stopAutoRefresh();
+            }
+            
+            // 构建查询 URL
+            const params = new URLSearchParams();
+            if (currentFilters.keyword) params.append('keyword', currentFilters.keyword);
+            if (currentFilters.server) params.append('server', currentFilters.server);
+            if (currentFilters.level) params.append('level', currentFilters.level);
+            
+            // 显示当前筛选条件
+            updateActiveFiltersDisplay();
+            
+            // 查询
+            fetch('/api/query?' + params.toString())
+                .then(r => r.text())
+                .then(data => {
+                    if (!data || data.trim() === '') {
+                        document.getElementById('logs').innerHTML = '<div class="empty">暂无符合条件的日志</div>';
+                    } else {
+                        displayLogs(data);
+                    }
+                })
+                .catch(err => {
+                    console.error('查询失败:', err);
+                    document.getElementById('logs').innerHTML = '<div class="empty">查询失败</div>';
+                });
+        }
+        
+        // ============ 清除所有筛选 ============
+        function clearAllFilters() {
+            currentFilters = { keyword: '', server: '', level: '' };
+            document.getElementById('keyword').value = '';
+            
+            // 重置所有 Tab
+            document.querySelectorAll('.tab').forEach(tab => {
+                const isAll = tab.getAttribute('data-server') === '' || tab.getAttribute('data-level') === '';
+                tab.classList.toggle('active', isAll);
+            });
+            
+            applyFilters();
+            startAutoRefresh();
+        }
+        
+        // ============ 显示当前筛选条件 ============
+        function updateActiveFiltersDisplay() {
+            const container = document.getElementById('activeFilters');
+            const filters = [];
+            
+            if (currentFilters.keyword) filters.push(`关键字: ${currentFilters.keyword}`);
+            if (currentFilters.server) filters.push(`服务器: ${currentFilters.server}`);
+            if (currentFilters.level) filters.push(`级别: ${currentFilters.level}`);
+            
+            if (filters.length > 0) {
+                container.innerHTML = '当前筛选: ' + filters.map(f => 
+                    `<span class="filter-tag">${f}</span>`
+                ).join('');
+                container.classList.add('show');
+            } else {
+                container.classList.remove('show');
+            }
+        }
+        
+        // ============ 渲染日志 ============
+        function displayLogs(data) {
+            const lines = data.split('\n').filter(line => line.trim());
+            
+            if (lines.length === 0) {
+                document.getElementById('logs').innerHTML = '<div class="empty">暂无日志</div>';
+                return;
+            }
+            
+            const html = lines.map(line => {
+                let className = 'log-line';
+                
+                // 根据级别添加颜色
+                if (line.includes('[ERROR]')) className += ' error';
+                else if (line.includes('[WARN]')) className += ' warn';
+                else if (line.includes('[INFO]')) className += ' info';
+                else if (line.includes('[DEBUG]')) className += ' debug';
+                
+                return `<div class="${className}">${escapeHtml(line)}</div>`;
+            }).join('');
+            
+            document.getElementById('logs').innerHTML = html;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // ============ 自动刷新控制 ============
+        function toggleAutoRefresh() {
+            autoRefreshEnabled ? stopAutoRefresh() : startAutoRefresh();
+        }
+        
+        function startAutoRefresh() {
+            if (currentFilters.keyword || currentFilters.server || currentFilters.level) {
+                return; // 有筛选条件时不自动刷新
+            }
+            
+            autoRefreshEnabled = true;
+            document.getElementById('refreshBtn').textContent = '⏸ 暂停刷新';
+            
+            if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+            autoRefreshTimer = setInterval(() => {
+                applyFilters();
+                updateStats();
+            }, 3000);
+        }
+        
+        function stopAutoRefresh() {
+            autoRefreshEnabled = false;
+            document.getElementById('refreshBtn').textContent = '▶ 自动刷新';
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+                autoRefreshTimer = null;
+            }
+        }
+        
+        // ============ 初始化 ============
+        document.addEventListener('DOMContentLoaded', () => {
+            applyFilters();
+            updateStats();
+            startAutoRefresh();
+        });
+    </script>
+</body>
+</html>
+
