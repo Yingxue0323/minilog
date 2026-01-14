@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MiniLog - 服务器监控</title>
+    <title>MiniLog - Server Monitoring</title>
     <meta charset="utf-8">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -233,40 +233,40 @@
 </head>
 <body>
     <h1>
-        📊 MiniLog 监控 
-        <span class="badge">实时监控 + 图表分析</span>
+        📊 MiniLog Monitoring 
+        <span class="badge">Real-time Monitoring + Chart Analysis</span>
     </h1>
     
-    <!-- 导航栏 -->
+    <!-- Navigation -->
     <div class="nav">
-        <a href="/">📋 日志查询</a>
-        <a href="/monitor.html" class="active">📊 服务器监控</a>
+        <a href="/">📋 Log Query</a>
+        <a href="/monitor.html" class="active">📊 Server Monitoring</a>
     </div>
     
-    <!-- 统计信息 -->
+    <!-- Statistics -->
     <div class="info-bar" id="stats">
         <div class="stat">
-            <span class="stat-label">总服务器:</span>
+            <span class="stat-label">Total Servers:</span>
             <span class="stat-value" id="totalServers">0</span>
         </div>
         <div class="stat">
-            <span class="stat-label">在线:</span>
+            <span class="stat-label">Online:</span>
             <span class="stat-value" id="onlineServers">0</span>
         </div>
         <div class="stat">
-            <span class="stat-label">离线:</span>
+            <span class="stat-label">Offline:</span>
             <span class="stat-value" id="offlineServers">0</span>
         </div>
         <div class="stat">
-            <span class="stat-label">总指标数:</span>
+            <span class="stat-label">Total Metrics:</span>
             <span class="stat-value" id="totalMetrics">0</span>
         </div>
     </div>
     
-    <!-- 控制按钮 -->
+    <!-- Control Buttons -->
     <div class="controls">
-        <button onclick="refreshData()">🔄 刷新数据</button>
-        <button onclick="toggleAutoRefresh()" id="autoRefreshBtn">⏸ 暂停自动刷新</button>
+        <button onclick="refreshData()">🔄 Refresh Data</button>
+        <button onclick="toggleAutoRefresh()" id="autoRefreshBtn">⏸ Pause Auto-Refresh</button>
     </div>
     
     <!-- 服务器卡片 -->
@@ -282,13 +282,13 @@
         let autoRefreshTimer = null;
         let charts = {};
         
-        // ============ 数据获取 ============
+        // ============ Data Fetching ============
         async function fetchServerStatus() {
             try {
                 const response = await fetch('/api/servers');
                 return await response.json();
             } catch (error) {
-                console.error('获取服务器状态失败:', error);
+                console.error('Failed to fetch server status:', error);
                 return [];
             }
         }
@@ -298,7 +298,7 @@
                 const response = await fetch(`/api/metrics?server=${server}&limit=120`);
                 return await response.json();
             } catch (error) {
-                console.error('获取监控数据失败:', error);
+                console.error('Failed to fetch metrics:', error);
                 return [];
             }
         }
@@ -308,7 +308,7 @@
                 const response = await fetch('/api/stats');
                 return await response.json();
             } catch (error) {
-                console.error('获取统计信息失败:', error);
+                console.error('Failed to fetch stats:', error);
                 return {};
             }
         }
@@ -318,17 +318,17 @@
             const grid = document.getElementById('serversGrid');
             
             if (servers.length === 0) {
-                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🖥️</div>暂无服务器数据<br><small>请运行 client_agent.py 开始采集</small></div>';
+                grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🖥️</div>No server data<br><small>Run minilog-agent to start collecting</small></div>';
                 return;
             }
             
             grid.innerHTML = servers.map(server => {
                 const statusClass = `status-${server.status}`;
                 const statusText = {
-                    'online': '在线',
-                    'timeout': '超时',
-                    'offline': '离线'
-                }[server.status] || '未知';
+                    'online': 'Online',
+                    'timeout': 'Timeout',
+                    'offline': 'Offline'
+                }[server.status] || 'Unknown';
                 
                 const latest = server.latest || {};
                 const cpuPercent = latest.cpu_percent || 0;
@@ -354,7 +354,7 @@
                             </div>
                             
                             <div class="metric-row">
-                                <span class="metric-label">内存</span>
+                                <span class="metric-label">Memory</span>
                                 <span class="metric-value">${memoryPercent.toFixed(1)}%</span>
                             </div>
                             <div class="metric-bar">
@@ -362,7 +362,7 @@
                             </div>
                             
                             <div class="metric-row">
-                                <span class="metric-label">磁盘</span>
+                                <span class="metric-label">Disk</span>
                                 <span class="metric-value">${diskPercent}%</span>
                             </div>
                             <div class="metric-bar">
@@ -370,7 +370,7 @@
                             </div>
                             
                             <div class="metric-row" style="margin-top: 8px;">
-                                <span class="metric-label">负载</span>
+                                <span class="metric-label">Load</span>
                                 <span class="metric-value">${loadAvg.toFixed(2)}</span>
                             </div>
                         </div>
@@ -396,15 +396,15 @@
             const container = document.getElementById('chartsContainer');
             
             if (!server) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📈</div>请选择一个服务器查看详细图表</div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📈</div>Select a server to view detailed charts</div>';
                 return;
             }
             
-            // 获取数据
+            // Fetch data
             const metrics = await fetchMetrics(server);
             
             if (metrics.length === 0) {
-                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div>暂无监控数据</div>';
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div>No monitoring data available</div>';
                 return;
             }
             
@@ -419,35 +419,35 @@
             const diskData = metrics.map(m => m.metrics.disk_percent);
             const loadData = metrics.map(m => m.metrics.load_avg);
             
-            // 创建图表容器
+            // Create chart containers
             container.innerHTML = `
                 <div class="chart-card">
-                    <div class="chart-title">CPU 使用率 (${server})</div>
+                    <div class="chart-title">CPU Usage (${server})</div>
                     <div class="chart-wrapper">
                         <canvas id="cpuChart"></canvas>
                     </div>
                 </div>
                 <div class="chart-card">
-                    <div class="chart-title">内存使用率 (${server})</div>
+                    <div class="chart-title">Memory Usage (${server})</div>
                     <div class="chart-wrapper">
                         <canvas id="memoryChart"></canvas>
                     </div>
                 </div>
                 <div class="chart-card">
-                    <div class="chart-title">磁盘使用 (${server})</div>
+                    <div class="chart-title">Disk Usage (${server})</div>
                     <div class="chart-wrapper">
                         <canvas id="diskChart"></canvas>
                     </div>
                 </div>
                 <div class="chart-card">
-                    <div class="chart-title">系统负载 (${server})</div>
+                    <div class="chart-title">System Load (${server})</div>
                     <div class="chart-wrapper">
                         <canvas id="loadChart"></canvas>
                     </div>
                 </div>
             `;
             
-            // 销毁旧图表
+            // Destroy old charts
             Object.values(charts).forEach(chart => chart.destroy());
             charts = {};
             
@@ -467,17 +467,17 @@
                         tension: 0.4
                     }]
                 },
-                options: getChartOptions('CPU 使用率 (%)', 0, 100)
+                options: getChartOptions('CPU Usage (%)', 0, 100)
             });
             
-            // 内存图表
+            // Memory Chart
             const memoryCtx = document.getElementById('memoryChart').getContext('2d');
             charts.memory = new Chart(memoryCtx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '内存 %',
+                        label: 'Memory %',
                         data: memoryData,
                         borderColor: '#ce9178',
                         backgroundColor: 'rgba(206, 145, 120, 0.1)',
@@ -486,17 +486,17 @@
                         tension: 0.4
                     }]
                 },
-                options: getChartOptions('内存使用率 (%)', 0, 100)
+                options: getChartOptions('Memory Usage (%)', 0, 100)
             });
             
-            // 磁盘图表
+            // Disk Chart
             const diskCtx = document.getElementById('diskChart').getContext('2d');
             charts.disk = new Chart(diskCtx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '磁盘 %',
+                        label: 'Disk %',
                         data: diskData,
                         borderColor: '#73c991',
                         backgroundColor: 'rgba(115, 201, 145, 0.1)',
@@ -505,17 +505,17 @@
                         tension: 0.4
                     }]
                 },
-                options: getChartOptions('磁盘使用率 (%)', 0, 100)
+                options: getChartOptions('Disk Usage (%)', 0, 100)
             });
             
-            // 负载图表
+            // Load Chart
             const loadCtx = document.getElementById('loadChart').getContext('2d');
             charts.load = new Chart(loadCtx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: '负载',
+                        label: 'Load',
                         data: loadData,
                         borderColor: '#dbb765',
                         backgroundColor: 'rgba(219, 183, 101, 0.1)',
@@ -524,7 +524,7 @@
                         tension: 0.4
                     }]
                 },
-                options: getChartOptions('系统负载 (1分钟)')
+                options: getChartOptions('System Load (1 min)')
             });
         }
         
@@ -600,17 +600,17 @@
             const btn = document.getElementById('autoRefreshBtn');
             
             if (autoRefreshEnabled) {
-                btn.textContent = '⏸ 暂停自动刷新';
+                btn.textContent = '⏸ Pause Auto-Refresh';
                 startAutoRefresh();
             } else {
-                btn.textContent = '▶ 开启自动刷新';
+                btn.textContent = '▶ Resume Auto-Refresh';
                 stopAutoRefresh();
             }
         }
         
         function startAutoRefresh() {
             if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-            autoRefreshTimer = setInterval(refreshData, 5000); // 每 5 秒刷新
+            autoRefreshTimer = setInterval(refreshData, 5000); // Refresh every 5 seconds
         }
         
         function stopAutoRefresh() {

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>MiniLog - 生产级</title>
+    <title>MiniLog - Log Query</title>
     <meta charset="utf-8">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -223,63 +223,63 @@
 <body>
     <h1>
         📋 MiniLog 
-        <span class="badge">实时查询 + 智能压缩 + 多服务器</span>
+        <span class="badge">Real-time Query + Smart Compression + Multi-server</span>
     </h1>
     
-    <!-- 导航栏 -->
+    <!-- Navigation -->
     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-        <a href="/" style="padding: 10px 20px; background: #0e639c; color: white; text-decoration: none; border-radius: 4px; border: 1px solid #0e639c;">📋 日志查询</a>
-        <a href="/monitor.html" style="padding: 10px 20px; background: #2d2d2d; color: #d4d4d4; text-decoration: none; border-radius: 4px; border: 1px solid #3e3e3e;">📊 服务器监控</a>
+        <a href="/" style="padding: 10px 20px; background: #0e639c; color: white; text-decoration: none; border-radius: 4px; border: 1px solid #0e639c;">📋 Log Query</a>
+        <a href="/monitor.html" style="padding: 10px 20px; background: #2d2d2d; color: #d4d4d4; text-decoration: none; border-radius: 4px; border: 1px solid #3e3e3e;">📊 Server Monitoring</a>
     </div>
     
-    <!-- 统计信息 -->
+    <!-- Statistics -->
     <div class="info-bar" id="stats">
         <div class="stat">
-            <span class="stat-label">总接收:</span>
+            <span class="stat-label">Total Received:</span>
             <span class="stat-value" id="total">0</span>
         </div>
         <div class="stat">
-            <span class="stat-label">已压缩:</span>
+            <span class="stat-label">Compressed:</span>
             <span class="stat-value" id="compressed">0</span>
         </div>
         <div class="stat">
-            <span class="stat-label">内存中:</span>
+            <span class="stat-label">In Memory:</span>
             <span class="stat-value" id="memory">0</span>
         </div>
         <div class="stat">
-            <span class="stat-label">压缩比:</span>
+            <span class="stat-label">Ratio:</span>
             <span class="stat-value" id="ratio">-</span>
         </div>
         <div class="stat">
-            <span class="stat-label">服务器数:</span>
+            <span class="stat-label">Servers:</span>
             <span class="stat-value" id="serverCount">-</span>
         </div>
     </div>
     
-    <!-- 搜索栏 -->
+    <!-- Search Bar -->
     <div class="search-bar">
-        <input id="keyword" placeholder="🔍 搜索日志内容..." onkeypress="if(event.key==='Enter')applyFilters()" />
-        <button onclick="applyFilters()">查询</button>
-        <button onclick="clearAllFilters()">清除筛选</button>
-        <button onclick="toggleAutoRefresh()" id="refreshBtn">⏸ 暂停刷新</button>
+        <input id="keyword" placeholder="🔍 Search logs..." onkeypress="if(event.key==='Enter')applyFilters()" />
+        <button onclick="applyFilters()">Search</button>
+        <button onclick="clearAllFilters()">Clear Filters</button>
+        <button onclick="toggleAutoRefresh()" id="refreshBtn">⏸ Pause Refresh</button>
     </div>
     
-    <!-- 矩阵过滤器 -->
+    <!-- Filter Matrix -->
     <div class="filter-matrix">
-        <!-- 服务器筛选 -->
+        <!-- Server Filter -->
         <div class="filter-section">
-            <div class="filter-label">🖥 服务器来源</div>
+            <div class="filter-label">🖥 Server Source</div>
             <div class="filter-tabs" id="serverTabs">
-                <div class="tab active" data-server="" onclick="selectServer('')">全部</div>
-                <!-- 动态生成 -->
+                <div class="tab active" data-server="" onclick="selectServer('')">All</div>
+                <!-- Dynamically generated -->
             </div>
         </div>
         
-        <!-- 日志级别筛选 -->
+        <!-- Log Level Filter -->
         <div class="filter-section">
-            <div class="filter-label">📊 日志级别</div>
+            <div class="filter-label">📊 Log Level</div>
             <div class="filter-tabs" id="levelTabs">
-                <div class="tab active" data-level="" onclick="selectLevel('')">全部</div>
+                <div class="tab active" data-level="" onclick="selectLevel('')">All</div>
                 <div class="tab" data-level="ERROR" onclick="selectLevel('ERROR')">ERROR</div>
                 <div class="tab" data-level="WARN" onclick="selectLevel('WARN')">WARN</div>
                 <div class="tab" data-level="INFO" onclick="selectLevel('INFO')">INFO</div>
@@ -287,12 +287,12 @@
             </div>
         </div>
         
-        <!-- 当前筛选条件 -->
+        <!-- Active Filters -->
         <div class="active-filters" id="activeFilters"></div>
     </div>
     
-    <!-- 日志显示区域 -->
-    <div id="logs" class="loading">加载中...</div>
+    <!-- Log Display Area -->
+    <div id="logs" class="loading">Loading...</div>
     
     <script>
         // 全局状态
@@ -392,7 +392,7 @@
                 .then(r => r.text())
                 .then(data => {
                     if (!data || data.trim() === '') {
-                        document.getElementById('logs').innerHTML = '<div class="empty">暂无符合条件的日志</div>';
+                        document.getElementById('logs').innerHTML = '<div class="empty">No logs match the filter criteria</div>';
                     } else {
                         displayLogs(data);
                     }
@@ -423,12 +423,12 @@
             const container = document.getElementById('activeFilters');
             const filters = [];
             
-            if (currentFilters.keyword) filters.push(`关键字: ${currentFilters.keyword}`);
-            if (currentFilters.server) filters.push(`服务器: ${currentFilters.server}`);
-            if (currentFilters.level) filters.push(`级别: ${currentFilters.level}`);
+            if (currentFilters.keyword) filters.push(`Keyword: ${currentFilters.keyword}`);
+            if (currentFilters.server) filters.push(`Server: ${currentFilters.server}`);
+            if (currentFilters.level) filters.push(`Level: ${currentFilters.level}`);
             
             if (filters.length > 0) {
-                container.innerHTML = '当前筛选: ' + filters.map(f => 
+                container.innerHTML = 'Active Filters: ' + filters.map(f => 
                     `<span class="filter-tag">${f}</span>`
                 ).join('');
                 container.classList.add('show');
@@ -478,7 +478,7 @@
             }
             
             autoRefreshEnabled = true;
-            document.getElementById('refreshBtn').textContent = '⏸ 暂停刷新';
+            document.getElementById('refreshBtn').textContent = '⏸ Pause Refresh';
             
             if (autoRefreshTimer) clearInterval(autoRefreshTimer);
             autoRefreshTimer = setInterval(() => {
@@ -489,7 +489,7 @@
         
         function stopAutoRefresh() {
             autoRefreshEnabled = false;
-            document.getElementById('refreshBtn').textContent = '▶ 自动刷新';
+            document.getElementById('refreshBtn').textContent = '▶ Resume Refresh';
             if (autoRefreshTimer) {
                 clearInterval(autoRefreshTimer);
                 autoRefreshTimer = null;

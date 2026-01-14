@@ -134,7 +134,7 @@ func (s *LogStorage) flushToDisk() {
 	ratio := float64(originalSize) / float64(compressedSize)
 	s.stats.CompressionRatio = ratio
 	
-	fmt.Printf("💾 [压缩] %d条日志 | %d B → %d B | 压缩比 %.1f:1 | 文件: %s\n",
+	fmt.Printf("💾 [Compressed] %d logs | %d B → %d B | Ratio %.1f:1 | File: %s\n",
 		len(logsToCompress), originalSize, compressedSize, ratio, filename)
 }
 
@@ -344,7 +344,7 @@ func main() {
 			metricsStorage.Append(metricsEntry)
 		}
 		
-		fmt.Fprintf(w, "✓ 已接收")
+		fmt.Fprintf(w, "✓ Received")
 	})
 	
 	// API: 查询日志（内存+磁盘，支持多维度筛选）
@@ -438,12 +438,12 @@ func main() {
 	// 静态文件服务（前端页面）
 	http.Handle("/", http.FileServer(http.Dir("static")))
 	
-	fmt.Println("🚀 MiniLog 轻量级监控版启动！")
-	fmt.Println("📊 Web界面: http://localhost:8080")
-	fmt.Println("📡 接收日志: POST http://localhost:8080/api/logs")
-	fmt.Println("📈 轻量指标: CPU, 内存, 磁盘, 负载 (每次推送 ~50 bytes)")
-	fmt.Println("💾 智能压缩: 1000条/1分钟 触发")
-	fmt.Println("🔍 查询策略: 内存优先 → 磁盘补充")
-	fmt.Println("📉 监控功能: 无心跳，基于日志推送时间判断状态")
+	fmt.Println("🚀 MiniLog Lightweight Monitoring Version Started!")
+	fmt.Println("📊 Web UI: http://localhost:8080")
+	fmt.Println("📡 Receive Logs: POST http://localhost:8080/api/logs")
+	fmt.Println("📈 Lightweight Metrics: CPU, Memory, Disk, Load (~50 bytes per push)")
+	fmt.Println("💾 Smart Compression: Triggers at 1000 logs or 1 minute")
+	fmt.Println("🔍 Query Strategy: Memory first → Disk fallback")
+	fmt.Println("📉 Monitoring: No heartbeat, status based on log push time")
 	http.ListenAndServe(":8080", nil)
 }

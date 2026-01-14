@@ -66,12 +66,12 @@ func main() {
 		agent.serverName = hostname
 	}
 
-	fmt.Println("🚀 MiniLog Agent 启动")
-	fmt.Println("📡 服务器名称:", agent.serverName)
+	fmt.Println("🚀 MiniLog Agent Started")
+	fmt.Println("📡 Server Name:", agent.serverName)
 	fmt.Println("🌐 MiniLog URL:", agent.minilogURL)
-	fmt.Println("⏱  采集间隔:", agent.interval, "秒")
+	fmt.Println("⏱  Interval:", agent.interval, "seconds")
 	fmt.Println(strings.Repeat("-", 50))
-	fmt.Println("📊 开始采集监控数据...")
+	fmt.Println("📊 Starting metrics collection...")
 	fmt.Println()
 
 	// 主循环
@@ -94,17 +94,17 @@ func (a *Agent) run() {
 func (a *Agent) collectAndSend() {
 	metrics, err := a.collectMetrics()
 	if err != nil {
-		log.Printf("❌ 采集失败: %v\n", err)
+		log.Printf("❌ Collection failed: %v\n", err)
 		return
 	}
 
 	if err := a.sendToMiniLog(metrics); err != nil {
-		log.Printf("⚠️  推送失败: %v\n", err)
+		log.Printf("⚠️  Push failed: %v\n", err)
 		return
 	}
 
 	// 成功输出
-	fmt.Printf("✅ [%s] CPU: %5.1f%% | 内存: %5.1f%% | 磁盘: %5.1f%% | 负载: %.2f\n",
+	fmt.Printf("✅ [%s] CPU: %5.1f%% | Memory: %5.1f%% | Disk: %5.1f%% | Load: %.2f\n",
 		time.Now().Format("15:04:05"),
 		metrics.CPUPercent,
 		metrics.MemoryPercent,
@@ -156,7 +156,7 @@ func (a *Agent) sendToMiniLog(metrics *Metrics) error {
 		Timestamp: time.Now().Format("2006-01-02 15:04:05"),
 		Level:     "METRICS",
 		Server:    a.serverName,
-		Message:   fmt.Sprintf("系统指标 - CPU: %.1f%% | 内存: %.1f%%", metrics.CPUPercent, metrics.MemoryPercent),
+		Message:   fmt.Sprintf("System Metrics - CPU: %.1f%% | Memory: %.1f%%", metrics.CPUPercent, metrics.MemoryPercent),
 		Metrics:   metrics,
 	}
 
