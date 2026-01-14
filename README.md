@@ -102,7 +102,6 @@ SSH into servers to manually `grep` logs
 | **Setup** | 5 min | 2 hours | 30 min |
 | **Memory** | 30 MB | 4 GB | 500 MB |
 | **Deployment** | Single binary | Multi-component | Multi-component |
-| **Cost** | $10/mo | $520/mo | $130/mo |
 
 ---
 
