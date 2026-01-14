@@ -8,7 +8,6 @@
 
 - 🪶 **30 MB 内存** - 比 Prometheus 轻 30 倍
 - ⚡ **5分钟部署** - 单个二进制，零配置
-- 💰 **节省 96% 成本** - 无需额外服务器
 - 📦 **一体化** - 日志 + 监控集于一身
 - 🔒 **无心跳** - 基于日志推送时间推断状态
 
@@ -53,11 +52,6 @@ go build -o minilog-agent
 # 在被监控服务器上运行
 ./minilog-agent --server web-01 --minilog http://192.168.1.100:8080
 ```
-
-### 3. 访问 Web 界面
-
-- **日志查询**：http://localhost:8080
-- **服务器监控**：http://localhost:8080/monitor.html
 
 ---
 

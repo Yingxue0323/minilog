@@ -8,7 +8,6 @@
 
 - 🪶 **30 MB Memory** - 30x lighter than Prometheus
 - ⚡ **5-Minute Setup** - Single binary, zero configuration
-- 💰 **96% Cost Savings** - No separate servers needed
 - 📦 **All-in-One** - Logs + Monitoring in one system
 - 🔒 **No Heartbeat** - Status inferred from log push time
 
@@ -53,11 +52,6 @@ go build -o minilog-agent
 # Run on monitored servers
 ./minilog-agent --server web-01 --minilog http://192.168.1.100:8080
 ```
-
-### 3. Access Web Interface
-
-- **Log Query**: http://localhost:8080
-- **Server Monitoring**: http://localhost:8080/monitor.html
 
 ---
 

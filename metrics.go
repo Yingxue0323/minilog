@@ -233,23 +233,24 @@ func (m *MetricsStorage) persistMetrics() {
 				continue
 			}
 			
-			// 计算平均值
-			var sumCPU, sumMemory, sumNetIn, sumNetOut float64
-			for _, entry := range entries {
-				sumCPU += entry.Metrics.CPUPercent
-				sumMemory += entry.Metrics.MemoryPercent
-				sumNetIn += entry.Metrics.NetworkInMbps
-				sumNetOut += entry.Metrics.NetworkOutMbps
-			}
-			
-			count := float64(len(entries))
-			aggregated[server] = map[string]interface{}{
-				"avg_cpu":     sumCPU / count,
-				"avg_memory":  sumMemory / count,
-				"avg_net_in":  sumNetIn / count,
-				"avg_net_out": sumNetOut / count,
-				"samples":     len(entries),
-			}
+		// 计算平均值
+		var sumCPU, sumMemory, sumDisk float64
+		var sumLoad float64
+		for _, entry := range entries {
+			sumCPU += entry.Metrics.CPUPercent
+			sumMemory += entry.Metrics.MemoryPercent
+			sumDisk += entry.Metrics.DiskPercent
+			sumLoad += entry.Metrics.LoadAvg
+		}
+		
+		count := float64(len(entries))
+		aggregated[server] = map[string]interface{}{
+			"avg_cpu":    sumCPU / count,
+			"avg_memory": sumMemory / count,
+			"avg_disk":   sumDisk / count,
+			"avg_load":   sumLoad / count,
+			"samples":    len(entries),
+		}
 		}
 		
 		m.metricsMu.RUnlock()
